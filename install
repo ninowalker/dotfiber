@@ -1,9 +1,16 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 : ${FIBER_PREFIX:=$HOME}
 : ${FIBER_HOME:=$FIBER_PREFIX/.fiber}
 : ${FIBER_REPO:=https://github.com/ninowalker/dotfiber.git}
 : ${FIBER_TAG:=master}
+: ${FIBER_DEVELOP:=false}
+
+function usage {
+  echo "usage:"
+  echo " $0 help"
+  echo " $0 develop"
+}
 
 function info {
   echo [`date`] "$*"
@@ -23,9 +30,43 @@ function setup_virtualenv {
 }
 
 function main {
+  if $FIBER_DEVELOP; then
+    info DEBUG - setting development virtualenv in $FIBER_HOME/env
+    mkdir -p $FIBER_HOME
+    python3 -m venv --prompt fiber-dev env
+    env/bin/pip install -e . -e .[test] -e .[develop]
+    exit 0
+  fi
+
   info DEBUG - setting up in $FIBER_HOME
   mkdir -p $FIBER_HOME || die 2 can\'t create $FIBER_HOME
   setup_virtualenv
 }
 
+function argparse {
+  info DEBUG - "$*"
+  while [ -n "$*" ]; do
+    case "$1" in
+      develop)
+        FIBER_HOME=`pwd`/.fiber
+        FIBER_DEVELOP=true
+        shift
+        ;;
+      help|-h|--help)
+        usage
+        exit 0
+        ;;
+      -x)
+        set -x
+        shift
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+  done
+}
+
+argparse $*
 main
