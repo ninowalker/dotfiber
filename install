@@ -1,0 +1,31 @@
+#!/bin/bash -eux
+
+: ${FIBER_PREFIX:=$HOME}
+: ${FIBER_HOME:=$FIBER_PREFIX/.fiber}
+: ${FIBER_REPO:=https://github.com/ninowalker/dotfiber.git}
+: ${FIBER_TAG:=master}
+
+function info {
+  echo [`date`] "$*"
+}
+
+function die {
+  code=$1
+  shift
+  info FATAL - "$*"
+  exit $code
+}
+
+function setup_virtualenv {
+  cd $FIBER_HOME
+  python3 -m venv --prompt .fiber env
+  env/bin/pip install git+${FIBER_REPO}@${FIBER_TAG}
+}
+
+function main {
+  info DEBUG - setting up in $FIBER_HOME
+  mkdir -p $FIBER_HOME || die 2 can\'t create $FIBER_HOME
+  setup_virtualenv
+}
+
+main
